@@ -1,0 +1,43 @@
+name: AllyCore
+version: '1.0'
+main: com.pallux.allycore.AllyCore
+api-version: '1.21'
+description: AI Companion Plugin - Hire a loyal Ally to fight by your side!
+authors: [Pallux]
+website: https://pallux.com
+
+softdepend:
+  - Vault
+  - PlaceholderAPI
+  - ProtocolLib
+
+commands:
+  ally:
+    description: Main AllyCore command
+    usage: /ally <help|summon|dismiss|info|rename|attack|follow|stay|mode>
+    permission: allycore.player
+    aliases: [a]
+  allyadmin:
+    description: AllyCore admin command
+    usage: /allyadmin <give|remove|reload|setstat|setlevel|revive|list>
+    permission: allycore.admin
+    aliases: [aa]
+  allyshop:
+    description: Open the AllyCore shop
+    usage: /allyshop
+    permission: allycore.player
+    aliases: [ashop]
+
+permissions:
+  allycore.player:
+    description: Access to all player AllyCore features
+    default: true
+  allycore.admin:
+    description: Access to all admin AllyCore features
+    default: op
+  allycore.bypass.cost:
+    description: Bypass all currency costs
+    default: op
+  allycore.bypass.revive:
+    description: Bypass revive cost
+    default: op

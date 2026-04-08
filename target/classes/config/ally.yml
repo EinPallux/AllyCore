@@ -1,0 +1,97 @@
+# AllyCore - Ally Configuration
+# All ally stat, AI, and behavior settings
+
+ally:
+  # Base stats at level 1
+  base-stats:
+    max-health: 20.0
+    attack-damage: 4.0
+    defense: 2.0
+    speed: 0.28
+    knockback-resistance: 0.1
+
+  # Stats gained per level automatically (minor gains - main upgrade is via stat tree)
+  level-up-bonus:
+    max-health: 0.5
+    attack-damage: 0.1
+    defense: 0.1
+    speed: 0.0
+    knockback-resistance: 0.0
+
+  # Max level the Ally can reach
+  max-level: 100
+
+  # XP required formula: base * (level ^ exponent)
+  xp:
+    base: 100
+    exponent: 1.8
+    # XP gained per mob kill (by difficulty)
+    kill-xp:
+      easy: 5       # e.g. zombie, skeleton
+      medium: 15    # e.g. creeper, spider
+      hard: 40      # e.g. witch, guardian
+      boss: 200     # e.g. wither, elder guardian, dragon
+    # XP gained per block walked (1 = every block)
+    walk-xp-per-block: 0.05
+
+  # Follow behavior
+  follow:
+    # Distance at which ally starts moving towards player
+    follow-distance: 5.0
+    # Distance at which ally teleports to player (far away / different worlds)
+    teleport-distance: 40.0
+    # Max path-finding distance
+    max-pathfind-distance: 50.0
+    # Ally speed multiplier when catching up
+    sprint-multiplier: 1.4
+
+  # Combat behavior
+  combat:
+    # Range at which ally will auto-detect threats (when in AGGRESSIVE or ALLROUND mode)
+    auto-detect-range: 12.0
+    # Range at which ally attacks
+    attack-range: 2.5
+    # Ticks between attacks (20 = 1 second)
+    attack-cooldown-ticks: 20
+    # Whether ally attacks players who attack the owner
+    defend-from-players: true
+    # Whether ally attacks neutral mobs that attack owner
+    defend-from-neutral-mobs: true
+    # Whether ally will attack illagers on sight in AGGRESSIVE mode
+    attack-illagers: true
+    # Ally will disengage combat if enemy is more than this far from owner
+    max-combat-distance: 30.0
+    # Knockback force applied to enemies
+    knockback-force: 0.4
+
+  # Death & Revive
+  death:
+    # How long (seconds) until ally can be revived for free (0 = always costs)
+    free-revive-window: 0
+    # Whether ally drops items on death
+    drop-items-on-death: false
+    # Particles on ally death
+    death-particles: true
+
+  # AI Tick Rate (lower = smoother but more CPU)
+  ai-tick-rate: 2  # every N ticks
+
+# Combat Modes
+modes:
+  DEFENSIVE:
+    description: "Only attacks when you or the ally are attacked"
+    display: "&#3B82F6⚔ Defensive"
+    color: "&#3B82F6"
+  AGGRESSIVE:
+    description: "Attacks any hostile mob on sight"
+    display: "&#EF4444⚔ Aggressive"
+    color: "&#EF4444"
+  NEUTRAL:
+    description: "Does not engage in combat at all"
+    display: "&#A3A3A3⚔ Neutral"
+    color: "&#A3A3A3"
+  ALLROUND:
+    description: "Attacks hostiles on sight and defends you"
+    display: "&#F59E0B⚔ Allround"
+    color: "&#F59E0B"
+  default: DEFENSIVE

@@ -1,0 +1,167 @@
+# AllyCore - Upgrades Configuration
+# Stat Tree and Armor Upgrade settings
+
+stat-tree:
+  # Each stat has multiple tiers (max-tier = number of upgrade tiers)
+  # Cost per tier: vault-cost and memento-cost
+
+  health:
+    display-name: "&#EF4444❤ Max Health"
+    description: "Increases your Ally's maximum health"
+    max-tier: 10
+    bonus-per-tier: 5.0  # +5 HP per tier
+    tiers:
+      1:  { vault: 500,   mementos: 10  }
+      2:  { vault: 1000,  mementos: 20  }
+      3:  { vault: 2000,  mementos: 40  }
+      4:  { vault: 3500,  mementos: 70  }
+      5:  { vault: 5000,  mementos: 100 }
+      6:  { vault: 7500,  mementos: 150 }
+      7:  { vault: 10000, mementos: 200 }
+      8:  { vault: 15000, mementos: 300 }
+      9:  { vault: 20000, mementos: 400 }
+      10: { vault: 30000, mementos: 600 }
+
+  attack:
+    display-name: "&#F97316⚔ Attack Damage"
+    description: "Increases your Ally's attack power"
+    max-tier: 10
+    bonus-per-tier: 1.0  # +1 ATK per tier
+    tiers:
+      1:  { vault: 750,   mementos: 15  }
+      2:  { vault: 1500,  mementos: 30  }
+      3:  { vault: 2500,  mementos: 50  }
+      4:  { vault: 4000,  mementos: 80  }
+      5:  { vault: 6000,  mementos: 120 }
+      6:  { vault: 8500,  mementos: 170 }
+      7:  { vault: 12000, mementos: 240 }
+      8:  { vault: 17000, mementos: 340 }
+      9:  { vault: 24000, mementos: 480 }
+      10: { vault: 35000, mementos: 700 }
+
+  defense:
+    display-name: "&#3B82F6🛡 Defense"
+    description: "Increases your Ally's damage reduction"
+    max-tier: 10
+    bonus-per-tier: 1.0  # +1 DEF per tier
+    tiers:
+      1:  { vault: 600,   mementos: 12  }
+      2:  { vault: 1200,  mementos: 24  }
+      3:  { vault: 2200,  mementos: 44  }
+      4:  { vault: 3700,  mementos: 74  }
+      5:  { vault: 5500,  mementos: 110 }
+      6:  { vault: 8000,  mementos: 160 }
+      7:  { vault: 11000, mementos: 220 }
+      8:  { vault: 16000, mementos: 320 }
+      9:  { vault: 22000, mementos: 440 }
+      10: { vault: 32000, mementos: 640 }
+
+  speed:
+    display-name: "&#10B981⚡ Speed"
+    description: "Increases your Ally's movement speed"
+    max-tier: 5
+    bonus-per-tier: 0.02
+    tiers:
+      1:  { vault: 1000,  mementos: 25  }
+      2:  { vault: 3000,  mementos: 75  }
+      3:  { vault: 7000,  mementos: 175 }
+      4:  { vault: 15000, mementos: 375 }
+      5:  { vault: 30000, mementos: 750 }
+
+  regeneration:
+    display-name: "&#A855F7✨ Regeneration"
+    description: "Adds passive health regen per second"
+    max-tier: 5
+    bonus-per-tier: 0.5  # +0.5 HP/sec per tier
+    tiers:
+      1:  { vault: 2000,  mementos: 50  }
+      2:  { vault: 5000,  mementos: 125 }
+      3:  { vault: 10000, mementos: 250 }
+      4:  { vault: 20000, mementos: 500 }
+      5:  { vault: 40000, mementos: 1000 }
+
+# Armory Upgrades
+armory:
+  # Armor sets in order (tier 0 = no armor)
+  armor-tiers:
+    0:
+      display-name: "&#A3A3A3No Armor"
+      description: "Ally has no armor equipped"
+      armor-type: NONE
+      vault: 0
+      mementos: 0
+    1:
+      display-name: "&#CD7F32Leather Armor"
+      description: "Basic leather armor for your Ally"
+      armor-type: LEATHER
+      vault: 1000
+      mementos: 20
+    2:
+      display-name: "&#A3A3A3Iron Armor"
+      description: "Sturdy iron protection"
+      armor-type: IRON
+      vault: 3000
+      mementos: 60
+    3:
+      display-name: "&#FFD700Gold Armor"
+      description: "Shiny but slightly weak"
+      armor-type: GOLD
+      vault: 4000
+      mementos: 80
+    4:
+      display-name: "&#22D3EEDiamond Armor"
+      description: "Strong diamond protection"
+      armor-type: DIAMOND
+      vault: 10000
+      mementos: 200
+    5:
+      display-name: "&#6C63FFNetherite Armor"
+      description: "The finest armor available"
+      armor-type: NETHERITE
+      vault: 25000
+      mementos: 500
+
+  # Weapon tiers
+  weapon-tiers:
+    0:
+      display-name: "&#A3A3A3Bare Hands"
+      description: "No weapon equipped"
+      weapon-type: NONE
+      vault: 0
+      mementos: 0
+    1:
+      display-name: "&#CD7F32Wooden Sword"
+      description: "A simple wooden sword"
+      weapon-type: WOODEN_SWORD
+      vault: 500
+      mementos: 10
+    2:
+      display-name: "&#A3A3A3Stone Sword"
+      description: "A reliable stone blade"
+      weapon-type: STONE_SWORD
+      vault: 1500
+      mementos: 30
+    3:
+      display-name: "&#FFD700Iron Sword"
+      description: "Standard iron weaponry"
+      weapon-type: IRON_SWORD
+      vault: 3000
+      mementos: 60
+    4:
+      display-name: "&#FFD700Gold Sword"
+      description: "Fast but fragile gold"
+      weapon-type: GOLDEN_SWORD
+      vault: 3500
+      mementos: 70
+    5:
+      display-name: "&#22D3EEDiamond Sword"
+      description: "Sharp and powerful diamond"
+      weapon-type: DIAMOND_SWORD
+      vault: 8000
+      mementos: 160
+    6:
+      display-name: "&#6C63FFNetherite Sword"
+      description: "The mightiest blade"
+      weapon-type: NETHERITE_SWORD
+      vault: 20000
+      mementos: 400

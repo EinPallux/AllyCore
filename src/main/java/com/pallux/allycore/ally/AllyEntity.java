@@ -104,25 +104,32 @@ public class AllyEntity {
         }
     }
 
-    // Paper 1.21.1 Attribute constants via Registry
-    private static final Attribute ATTR_MAX_HEALTH       = Objects.requireNonNull(org.bukkit.Registry.ATTRIBUTE.get(NamespacedKey.minecraft("generic.max_health")));
-    private static final Attribute ATTR_MOVEMENT_SPEED   = Objects.requireNonNull(org.bukkit.Registry.ATTRIBUTE.get(NamespacedKey.minecraft("generic.movement_speed")));
-    private static final Attribute ATTR_ATTACK_DAMAGE    = Objects.requireNonNull(org.bukkit.Registry.ATTRIBUTE.get(NamespacedKey.minecraft("generic.attack_damage")));
-    private static final Attribute ATTR_KNOCKBACK_RESIST = Objects.requireNonNull(org.bukkit.Registry.ATTRIBUTE.get(NamespacedKey.minecraft("generic.knockback_resistance")));
-    private static final Attribute ATTR_ARMOR            = Objects.requireNonNull(org.bukkit.Registry.ATTRIBUTE.get(NamespacedKey.minecraft("generic.armor")));
-
-    private void applyAttributes(Zombie z) {
-        setAttr(z, ATTR_MAX_HEALTH,       stats.getMaxHealth());
-        z.setHealth(data.getCurrentHealth() <= 0 ? stats.getMaxHealth() : Math.min(data.getCurrentHealth(), stats.getMaxHealth()));
-        setAttr(z, ATTR_MOVEMENT_SPEED,   stats.getSpeed());
-        setAttr(z, ATTR_ATTACK_DAMAGE,    stats.getAttackDamage());
-        setAttr(z, ATTR_KNOCKBACK_RESIST, stats.getKnockbackResistance());
-        setAttr(z, ATTR_ARMOR,            stats.getDefense());
+    // Safely fetch attribute from Registry, supporting both 1.21.1 (generic. prefix) and 1.21.2+ (no prefix)
+    private Attribute getAttributeSafe(String key) {
+        Attribute attr = org.bukkit.Registry.ATTRIBUTE.get(NamespacedKey.minecraft(key));
+        if (attr == null && key.startsWith("generic.")) {
+            attr = org.bukkit.Registry.ATTRIBUTE.get(NamespacedKey.minecraft(key.substring(8)));
+        }
+        return attr;
     }
 
-    private void setAttr(LivingEntity e, Attribute attr, double value) {
-        AttributeInstance inst = e.getAttribute(attr);
-        if (inst != null) inst.setBaseValue(value);
+    private void applyAttributes(Zombie z) {
+        setAttr(z, "generic.max_health", stats.getMaxHealth());
+        z.setHealth(data.getCurrentHealth() <= 0 ? stats.getMaxHealth() : Math.min(data.getCurrentHealth(), stats.getMaxHealth()));
+        setAttr(z, "generic.movement_speed", stats.getSpeed());
+        setAttr(z, "generic.attack_damage", stats.getAttackDamage());
+        setAttr(z, "generic.knockback_resistance", stats.getKnockbackResistance());
+        setAttr(z, "generic.armor", stats.getDefense());
+    }
+
+    private void setAttr(LivingEntity e, String attrKey, double value) {
+        Attribute attr = getAttributeSafe(attrKey);
+        if (attr != null) {
+            AttributeInstance inst = e.getAttribute(attr);
+            if (inst != null) {
+                inst.setBaseValue(value);
+            }
+        }
     }
 
     private void applyEquipment(Zombie z) {
@@ -437,7 +444,16 @@ public class AllyEntity {
 
     public void refreshAttributes() {
         if (entity == null || !entity.isValid()) return;
-        double prevMaxHp = Objects.requireNonNull(entity.getAttribute(ATTR_MAX_HEALTH)).getBaseValue();
+
+        double prevMaxHp = 20.0;
+        Attribute attrMaxHealth = getAttributeSafe("generic.max_health");
+        if (attrMaxHealth != null) {
+            AttributeInstance inst = entity.getAttribute(attrMaxHealth);
+            if (inst != null) {
+                prevMaxHp = inst.getBaseValue();
+            }
+        }
+
         double hpPercent = entity.getHealth() / prevMaxHp;
 
         applyAttributes(entity);

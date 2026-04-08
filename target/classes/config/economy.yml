@@ -1,0 +1,48 @@
+# AllyCore - Economy Configuration
+
+# Vault currency settings
+vault:
+  enabled: true
+  # Symbol used in messages
+  currency-symbol: "$"
+
+# Mementos - AllyCore's custom currency
+mementos:
+  display-name: "&#6C63FFMementos"
+  display-name-singular: "&#6C63FFMemento"
+  icon: AMETHYST_SHARD
+  icon-name: "&#6C63FF✦ Memento"
+  icon-lore:
+    - "&#A3A3A3A token of your Ally's battles."
+    - ""
+    - "&#A8A4FFEarned when your Ally assists"
+    - "&#A8A4FFin defeating enemies."
+
+  # Earn rates
+  earn:
+    per-mob-kill: 2        # Mementos per mob kill with Ally assist
+    per-player-kill: 10   # Mementos when Ally helps kill a player
+    boss-kill-bonus: 25   # Extra mementos for boss kills
+    # Multiplier per Ally level (e.g. 0.02 = +2% per level)
+    level-multiplier: 0.02
+
+# Revive costs
+revive:
+  vault-cost: 500
+  mementos-cost: 25
+  # Scale cost with level (each level adds this % to cost)
+  level-scale-percent: 5
+
+# Ally shop
+shop:
+  enabled: true
+  # Cost to purchase an Ally
+  ally-price-vault: 5000
+  ally-price-mementos: 0
+  # Display info
+  shop-title: "&#6C63FF✦ Ally Shop ✦"
+  featured-description:
+    - "&#A8A4FFPurchase a loyal Ally to fight"
+    - "&#A8A4FFby your side and grow stronger!"
+    - ""
+    - "&#A3A3A3One Ally per player."
