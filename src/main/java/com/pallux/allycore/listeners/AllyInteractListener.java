@@ -4,6 +4,7 @@ import com.pallux.allycore.AllyCore;
 import com.pallux.allycore.ally.AllyData;
 import com.pallux.allycore.ally.AllyEntity;
 import com.pallux.allycore.gui.MainAllyMenu;
+import com.pallux.allycore.util.ColorUtil;
 import com.pallux.allycore.util.MessageUtil;
 import org.bukkit.entity.*;
 import org.bukkit.event.*;
@@ -56,12 +57,18 @@ public class AllyInteractListener implements Listener {
             if (data == null) return;
             AllyEntity ae = plugin.getAllyManager().getActiveAlly(ownerUUID);
             double hp = ae != null && ae.isSpawned() ? ae.getEntity().getHealth() : data.getCurrentHealth();
-            String msg = plugin.getConfigManager().getMessage("prefix")
-                    + "&#A8A4FF" + data.getDisplayName()
-                    + " &#A3A3A3| &#EF4444❤ " + String.format("%.1f", hp)
-                    + " &#A3A3A3| &#A8A4FFLvl " + data.getLevel()
-                    + " &#A3A3A3| &#FFFFFF" + data.getMode().name();
-            player.sendMessage(msg);
+
+            // Fetch message dynamically from config to prevent hardcoding
+            String rawMsg = plugin.getConfigManager().getMessagesConfig().getString("messages.ally-quick-info", "{prefix}&#A8A4FF{name} &#A3A3A3| &#EF4444❤ {health} &#A3A3A3| &#A8A4FFLvl {level} &#A3A3A3| &#FFFFFF{mode}");
+
+            String msg = rawMsg
+                    .replace("{prefix}", plugin.getConfigManager().getMessage("prefix"))
+                    .replace("{name}", data.getDisplayName())
+                    .replace("{health}", String.format("%.1f", hp))
+                    .replace("{level}", String.valueOf(data.getLevel()))
+                    .replace("{mode}", data.getMode().name());
+
+            player.sendMessage(ColorUtil.translate(msg));
         }
     }
 }

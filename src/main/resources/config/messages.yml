@@ -18,6 +18,7 @@ messages:
   ally-dead: "{prefix}&#EF4444Your Ally is dead! Revive them at &#FFFFFF/ally revive&#EF4444."
   ally-following: "{prefix}&#10B981Your Ally is now following you."
   ally-staying: "{prefix}&#F59E0BAl Ally is holding position."
+  ally-quick-info: "{prefix}&#A8A4FF{name} &#A3A3A3| &#EF4444❤ {health} &#A3A3A3| &#A8A4FFLvl {level} &#A3A3A3| &#FFFFFF{mode}"
 
   # Ally - Naming
   rename-success: "{prefix}&#10B981Your Ally is now named &#FFFFFF{name}&#10B981!"

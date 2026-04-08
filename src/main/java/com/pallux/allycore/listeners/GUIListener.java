@@ -17,28 +17,36 @@ public class GUIListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (event.getClickedInventory() == null) return;
 
-        String title = event.getView().title().toString();
-
-        // Route to appropriate GUI handler
         AllyGUI gui = GUIRegistry.getOpenGUI(player.getUniqueId());
-        if (gui != null) {
+        // Only cancel if they are interacting with the GUI view
+        if (gui != null && event.getView().getTopInventory().equals(gui.getInventory())) {
             event.setCancelled(true);
-            gui.handleClick(event);
+
+            // Process clicks only if they clicked inside the top inventory (not their own inventory)
+            if (event.getClickedInventory() != null && event.getClickedInventory().equals(gui.getInventory())) {
+                gui.handleClick(event);
+            }
         }
     }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
-        GUIRegistry.removeOpenGUI(player.getUniqueId());
+
+        AllyGUI gui = GUIRegistry.getOpenGUI(player.getUniqueId());
+        // Only remove from registry if the closed inventory matches the current registered GUI
+        if (gui != null && event.getInventory().equals(gui.getInventory())) {
+            GUIRegistry.removeOpenGUI(player.getUniqueId());
+        }
     }
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (GUIRegistry.getOpenGUI(player.getUniqueId()) != null) {
+
+        AllyGUI gui = GUIRegistry.getOpenGUI(player.getUniqueId());
+        if (gui != null && event.getView().getTopInventory().equals(gui.getInventory())) {
             event.setCancelled(true);
         }
     }

@@ -3,17 +3,19 @@ package com.pallux.allycore.skin;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.*;
 import com.pallux.allycore.AllyCore;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -51,6 +53,28 @@ public class SkinManager {
     public void initialize() {
         this.protocolManager = ProtocolLibrary.getProtocolManager();
         reload();
+        registerPacketListeners();
+    }
+
+    private void registerPacketListeners() {
+        if (protocolManager == null) return;
+
+        // Intercept entity spawn packets and change zombies to players if they are an Ally
+        protocolManager.addPacketListener(new PacketAdapter(plugin, ListenerPriority.NORMAL, PacketType.Play.Server.SPAWN_ENTITY) {
+            @Override
+            public void onPacketSending(PacketEvent event) {
+                PacketContainer packet = event.getPacket();
+                UUID entityUuid = packet.getUUIDs().read(0);
+
+                if (profileCache.containsKey(entityUuid)) {
+                    // Ensure the client has the PlayerInfoData before spawning the entity
+                    sendSkinPackets(event.getPlayer(), profileCache.get(entityUuid));
+
+                    // Change EntityType from ZOMBIE to PLAYER
+                    packet.getEntityTypeModifier().write(0, EntityType.PLAYER);
+                }
+            }
+        });
     }
 
     public void reload() {
@@ -104,29 +128,26 @@ public class SkinManager {
         UUID fakeUUID = entity.getUniqueId();
         WrappedGameProfile profile = new WrappedGameProfile(fakeUUID, "Ally_" + owner.getName().substring(0, Math.min(5, owner.getName().length())));
         profile.getProperties().put("textures", new WrappedSignedProperty("textures", skinValue, skinSignature));
-        profileCache.put(entity.getUniqueId(), profile);
+        profileCache.put(fakeUUID, profile);
 
-        // Send PlayerInfo (ADD_PLAYER) packet to all players
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            sendSkinPackets(entity, profile);
-        }, 5L);
+        // Update for existing players viewing the entity
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            sendSkinPackets(viewer, profile);
+        }
     }
 
-    private void sendSkinPackets(Zombie entity, WrappedGameProfile profile) {
-        if (protocolManager == null || !entity.isValid()) return;
-
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            try {
-                // Send PlayerInfo packet to register the skin
-                PacketContainer infoPacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
-                // ProtocolLib handles the EnumWrappers
-                infoPacket.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
-                PlayerInfoData infoData = new PlayerInfoData(profile, 0, EnumWrappers.NativeGameMode.SURVIVAL, null);
-                infoPacket.getPlayerInfoDataLists().write(0, Collections.singletonList(infoData));
-                protocolManager.sendServerPacket(viewer, infoPacket);
-            } catch (Exception e) {
-                // ProtocolLib API may vary; gracefully skip
-            }
+    private void sendSkinPackets(Player viewer, WrappedGameProfile profile) {
+        if (protocolManager == null) return;
+        try {
+            // Send PlayerInfo packet to register the skin
+            PacketContainer infoPacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
+            // ProtocolLib handles the EnumWrappers
+            infoPacket.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
+            PlayerInfoData infoData = new PlayerInfoData(profile, 0, EnumWrappers.NativeGameMode.SURVIVAL, null);
+            infoPacket.getPlayerInfoDataLists().write(0, Collections.singletonList(infoData));
+            protocolManager.sendServerPacket(viewer, infoPacket);
+        } catch (Exception e) {
+            // ProtocolLib API may vary; gracefully skip
         }
     }
 
