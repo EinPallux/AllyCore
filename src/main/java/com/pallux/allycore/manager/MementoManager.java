@@ -1,6 +1,7 @@
 package com.pallux.allycore.manager;
 
 import com.pallux.allycore.AllyCore;
+import com.pallux.allycore.util.ColorUtil;
 import com.pallux.allycore.util.MessageUtil;
 import org.bukkit.entity.Player;
 
@@ -54,8 +55,15 @@ public class MementoManager {
 
         boolean useAB = plugin.getConfigManager().getMessagesConfig()
                 .getBoolean("messages.use-actionbar", true);
-        String msg = plugin.getConfigManager().getMessage("mementos-earned")
+
+        String prefix = plugin.getConfigManager().getMessage("prefix");
+        String rawMsg = plugin.getConfigManager().getMessagesConfig().getString("messages.mementos-earned", "{prefix}&#6C63FF+{amount} Mementos");
+
+        String msg = rawMsg
+                .replace("{prefix}", prefix)
                 .replace("{amount}", String.valueOf(amount));
+        msg = ColorUtil.translate(msg);
+
         if (useAB) {
             MessageUtil.sendActionBar(player, msg);
         } else {

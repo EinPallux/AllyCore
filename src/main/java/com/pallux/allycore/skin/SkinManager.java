@@ -8,6 +8,8 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.*;
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import com.pallux.allycore.AllyCore;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -127,7 +129,7 @@ public class SkinManager {
         UUID fakeUUID = entity.getUniqueId();
         String name = "Ally_" + owner.getName().substring(0, Math.min(5, owner.getName().length()));
 
-        // Create the Profile reflectively to bypass Authlib version incompatibilities
+        // Create the Profile using Paper API to completely bypass Authlib version incompatibilities
         Object nativeProfile = createNativeGameProfile(fakeUUID, name, skinValue, skinSignature);
         WrappedGameProfile profile;
 
@@ -147,44 +149,26 @@ public class SkinManager {
     }
 
     /**
-     * Uses Java Reflection to build a Mojang GameProfile.
-     * Safely handles pre-1.21.2 (Classes) and 1.21.2+ (Records).
+     * Uses Paper's native API to build a Mojang GameProfile properly handling Immutable property maps safely.
      */
     private Object createNativeGameProfile(UUID uuid, String name, String texture, String signature) {
         try {
-            Class<?> profileClass = Class.forName("com.mojang.authlib.GameProfile");
-            Object profile = profileClass.getConstructor(UUID.class, String.class).newInstance(uuid, name);
+            // 1. Let Paper API handle the complex internal Authlib GameProfile creation & immutability securely
+            PlayerProfile paperProfile = Bukkit.createProfile(uuid, name);
+            paperProfile.setProperty(new ProfileProperty("textures", texture, signature));
 
-            Object propertyMap;
-            try {
-                // Pre-1.21.2 accessor
-                propertyMap = profileClass.getMethod("getProperties").invoke(profile);
-            } catch (NoSuchMethodException e) {
-                // 1.21.2+ accessor (Java Record)
-                propertyMap = profileClass.getMethod("properties").invoke(profile);
-            }
-
-            Class<?> propertyClass = Class.forName("com.mojang.authlib.properties.Property");
-            Object property = propertyClass.getConstructor(String.class, String.class, String.class).newInstance("textures", texture, signature);
-
-            // Iterate through methods to find put() safely, avoiding strict generic matching errors
-            boolean putSuccess = false;
-            for (Method m : propertyMap.getClass().getMethods()) {
-                if (m.getName().equals("put") && m.getParameterCount() == 2) {
-                    m.invoke(propertyMap, "textures", property);
-                    putSuccess = true;
-                    break;
+            // 2. Extract the native Mojang GameProfile object out of the Paper implementation
+            for (Method m : paperProfile.getClass().getMethods()) {
+                if (m.getReturnType().getSimpleName().equals("GameProfile")) {
+                    m.setAccessible(true);
+                    return m.invoke(paperProfile); // Returns the perfectly built native GameProfile
                 }
             }
 
-            if (!putSuccess) {
-                plugin.getLogger().warning("[SkinManager] Could not find 'put' method in PropertyMap using reflection.");
-            }
-
-            return profile;
+            plugin.getLogger().warning("[SkinManager] Could not extract native GameProfile from Paper PlayerProfile.");
+            return null;
         } catch (Exception e) {
-            // Pass 'e' directly to the logger to print the full stack trace instead of getting 'null'
-            plugin.getLogger().log(Level.SEVERE, "[SkinManager] Failed to create native GameProfile via reflection:", e);
+            plugin.getLogger().log(Level.SEVERE, "[SkinManager] Failed to create GameProfile via Paper API:", e);
             return null;
         }
     }

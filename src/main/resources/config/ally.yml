@@ -53,6 +53,8 @@ ally:
     attack-range: 2.5
     # Ticks between attacks (20 = 1 second)
     attack-cooldown-ticks: 20
+    # Health restored when right-clicking the ally with food
+    food-heal-amount: 4.0
     # Whether ally attacks players who attack the owner
     defend-from-players: true
     # Whether ally attacks neutral mobs that attack owner
