@@ -1,0 +1,94 @@
+# AllyCore - Messages Configuration
+# Supports Hex Colors (&#FFFFFF) and Legacy Codes (&a, &b, etc.)
+# Use {prefix} for plugin prefix, {player} for player name
+
+messages:
+  # General
+  no-permission: "{prefix}&#EF4444You don't have permission to do that."
+  player-only: "{prefix}&#EF4444This command can only be used by players."
+  invalid-args: "{prefix}&#EF4444Invalid arguments. Use &#FFFFFF/ally help&#EF4444 for help."
+  plugin-reloaded: "{prefix}&#10B981Plugin reloaded successfully!"
+  player-not-found: "{prefix}&#EF4444Player &#FFFFFF{player}&#EF4444 was not found."
+
+  # Ally - General
+  no-ally: "{prefix}&#EF4444You don't have an Ally! Purchase one at &#FFFFFF/allyshop&#EF4444."
+  ally-already-exists: "{prefix}&#EF4444You already have an Ally!"
+  ally-summoned: "{prefix}&#10B981Your Ally has been summoned!"
+  ally-dismissed: "{prefix}&#A3A3A3Your Ally has been dismissed and is resting."
+  ally-dead: "{prefix}&#EF4444Your Ally is dead! Revive them at &#FFFFFF/ally revive&#EF4444."
+  ally-following: "{prefix}&#10B981Your Ally is now following you."
+  ally-staying: "{prefix}&#F59E0BAl Ally is holding position."
+
+  # Ally - Naming
+  rename-success: "{prefix}&#10B981Your Ally is now named &#FFFFFF{name}&#10B981!"
+  rename-too-long: "{prefix}&#EF4444Name is too long! Maximum &#FFFFFF{max}&#EF4444 characters."
+  rename-invalid: "{prefix}&#EF4444Name contains invalid characters."
+
+  # Ally - Mode
+  mode-changed: "{prefix}Your Ally is now in &#FFFFFF{mode}&#r mode."
+
+  # Ally - Death & Revive
+  ally-died: "{prefix}&#EF4444💀 Your Ally has fallen in battle! Revive them with &#FFFFFF/ally revive&#EF4444."
+  ally-died-broadcast: "&#EF4444💀 &#FFFFFF{player}'s&#EF4444 Ally has fallen in battle!"
+  revive-cost: "{prefix}&#A3A3A3Reviving your Ally costs &#FFFFFF${vault}&#A3A3A3 and &#6C63FF{mementos} Mementos&#A3A3A3."
+  revive-success: "{prefix}&#10B981✦ Your Ally has been revived!"
+  revive-no-money: "{prefix}&#EF4444Not enough money! You need &#FFFFFF${vault}&#EF4444."
+  revive-no-mementos: "{prefix}&#EF4444Not enough Mementos! You need &#6C63FF{mementos}&#EF4444."
+
+  # Ally - Mementos
+  mementos-earned: "{prefix}&#6C63FF+{amount} Mementos &#A3A3A3(Ally assist)"
+  memento-balance: "{prefix}&#A3A3A3You have &#6C63FF{amount} Mementos&#A3A3A3."
+
+  # Ally - Attack Command
+  attack-target: "{prefix}&#EF4444Your Ally is targeting &#FFFFFF{target}&#EF4444!"
+  attack-no-target: "{prefix}&#EF4444No valid target found. Look at a mob or player."
+  attack-cancel: "{prefix}&#A3A3A3Your Ally stopped attacking."
+
+  # Upgrades
+  upgrade-success: "{prefix}&#10B981✦ Upgrade successful! &#FFFFFF{stat}&#10B981 is now Tier &#FFFFFF{tier}&#10B981."
+  upgrade-max-tier: "{prefix}&#F59E0BThis stat is already at maximum tier!"
+  upgrade-no-money: "{prefix}&#EF4444Not enough money! You need &#FFFFFF${vault}&#EF4444."
+  upgrade-no-mementos: "{prefix}&#EF4444Not enough Mementos! You need &#6C63FF{mementos}&#EF4444."
+  upgrade-level-required: "{prefix}&#EF4444Your Ally must be at least level &#FFFFFF{level}&#EF4444 for this upgrade."
+
+  # Armor Upgrades
+  armor-upgrade-success: "{prefix}&#10B981✦ Ally armor upgraded to &#FFFFFF{tier}&#10B981!"
+  weapon-upgrade-success: "{prefix}&#10B981✦ Ally weapon upgraded to &#FFFFFF{tier}&#10B981!"
+
+  # Level Up
+  ally-levelup: "&#6C63FF✦ &#FFFFFF{ally_name}&#6C63FF leveled up to &#FFFFFF{level}&#6C63FF! ✦"
+  ally-levelup-title: "&#6C63FF✦ LEVEL UP ✦"
+  ally-levelup-subtitle: "&#A8A4FFYour Ally is now Level {level}!"
+
+  # Admin
+  admin-give-ally: "{prefix}&#10B981Gave an Ally to &#FFFFFF{player}&#10B981."
+  admin-remove-ally: "{prefix}&#F59E0BRemoved &#FFFFFF{player}&#F59E0B's Ally."
+  admin-set-stat: "{prefix}&#10B981Set &#FFFFFF{player}&#10B981's Ally {stat} to &#FFFFFF{value}&#10B981."
+  admin-set-level: "{prefix}&#10B981Set &#FFFFFF{player}&#10B981's Ally level to &#FFFFFF{level}&#10B981."
+  admin-revived: "{prefix}&#10B981Revived &#FFFFFF{player}&#10B981's Ally."
+
+  # Shop
+  shop-purchase-success: "{prefix}&#10B981✦ Purchase successful! Enjoy your new Ally!"
+  shop-already-has: "{prefix}&#EF4444You already own an Ally!"
+  shop-no-money: "{prefix}&#EF4444You don't have enough money for that!"
+
+  # Hologram format (above ally head)
+  hologram:
+    name-line: "&#6C63FF✦ {name} &#6C63FF✦"
+    level-line: "&#A8A4FFLvl {level}"
+    health-line: "&#EF4444❤ {health}&#A3A3A3/&#EF4444{max_health}"
+    stats-line: "&#F97316⚔ {atk}  &#3B82F6🛡 {def}"
+    mode-line: "{mode_color}{mode_icon} {mode}"
+    dead-line: "&#EF4444💀 Fallen"
+
+# Sounds for various events
+sounds:
+  ally-summoned: ENTITY_ENDERMAN_TELEPORT
+  ally-dismissed: ENTITY_ENDERMAN_TELEPORT
+  ally-levelup: UI_TOAST_CHALLENGE_COMPLETE
+  ally-died: ENTITY_WITHER_DEATH
+  ally-revived: ENTITY_PLAYER_LEVELUP
+  upgrade-purchased: ENTITY_EXPERIENCE_ORB_PICKUP
+  mementos-earned: ENTITY_EXPERIENCE_ORB_PICKUP
+  menu-open: UI_BUTTON_CLICK
+  menu-click: UI_BUTTON_CLICK
