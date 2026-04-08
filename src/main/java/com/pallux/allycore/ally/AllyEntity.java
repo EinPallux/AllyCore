@@ -32,8 +32,7 @@ public class AllyEntity {
     private LivingEntity target;         // Current combat target
     private boolean forceAttack = false; // Player-commanded attack
     private long lastAttackTime = 0;
-    private long lastRegenTime = 0;
-    private long lastXpWalkTime = 0;
+    private long lastWalkXPTime = 0;
     private Location lastWalkLocation;
 
     private BukkitTask aiTask;
@@ -53,7 +52,8 @@ public class AllyEntity {
         if (world == null) return;
 
         entity = world.spawn(location, Zombie.class, z -> {
-            z.setAI(false); // We control AI manually
+            z.setAI(true); // Enable AI for proper pathfinding physics
+            z.setAware(true);
             z.setSilent(false);
             z.setBaby(false);
             z.setRemoveWhenFarAway(false);
@@ -61,6 +61,10 @@ public class AllyEntity {
             z.setCustomNameVisible(false); // Hologram handles name
             z.setCollidable(true);
             z.setInvulnerable(false);
+            z.setCanPickupItems(false);
+
+            // Strip default vanilla zombie AI goals (so it doesn't randomly wander or attack villagers)
+            Bukkit.getMobGoals().removeAllGoals(z);
 
             // Apply attributes
             applyAttributes(z);
@@ -241,6 +245,13 @@ public class AllyEntity {
     private void tickAI() {
         if (owner == null || !owner.isOnline()) return;
 
+        // Prevent zombie from burning in the sun
+        if (entity.getFireTicks() > 0 &&
+                entity.getLocation().getBlock().getType() != Material.LAVA &&
+                entity.getLocation().getBlock().getType() != Material.FIRE) {
+            entity.setFireTicks(0);
+        }
+
         double followDist = plugin.getConfigManager().getAllyConfig().getDouble("ally.follow.follow-distance", 5.0);
         double teleportDist = plugin.getConfigManager().getAllyConfig().getDouble("ally.follow.teleport-distance", 40.0);
         double attackRange = plugin.getConfigManager().getAllyConfig().getDouble("ally.combat.attack-range", 2.5);
@@ -267,17 +278,19 @@ public class AllyEntity {
             // Move towards target
             double distToTarget = entity.getLocation().distance(target.getLocation());
             if (distToTarget > attackRange) {
-                navigateTo(target.getLocation(), stats.getSpeed() * 1.2);
+                navigateTo(target.getLocation(), 1.2); // 1.2 = Sprinting multiplier
             } else {
-                // Attack!
+                // Stop pathfinding and attack!
+                entity.getPathfinder().stopPathfinding();
+                entity.lookAt(target);
                 performAttack();
             }
-            entity.setRotation(getYawTowards(target.getLocation()), 0f);
         } else {
             // Follow owner
-            if (!data.isFollowing()) return;
-
-            double distToOwner = entity.getLocation().distance(owner.getLocation());
+            if (!data.isFollowing()) {
+                entity.getPathfinder().stopPathfinding();
+                return;
+            }
 
             // Different world check
             if (!entity.getWorld().equals(owner.getWorld())) {
@@ -285,12 +298,20 @@ public class AllyEntity {
                 return;
             }
 
+            double distToOwner = entity.getLocation().distance(owner.getLocation());
+
             if (distToOwner > teleportDist) {
                 teleportToOwner();
             } else if (distToOwner > followDist) {
-                double speed = stats.getSpeed();
-                if (distToOwner > followDist * 2) speed *= plugin.getConfigManager().getAllyConfig().getDouble("ally.follow.sprint-multiplier", 1.4);
-                navigateTo(owner.getLocation(), speed);
+                double speedMult = 1.0;
+                if (distToOwner > followDist * 2) {
+                    speedMult = plugin.getConfigManager().getAllyConfig().getDouble("ally.follow.sprint-multiplier", 1.4);
+                }
+                navigateTo(owner.getLocation(), speedMult);
+            } else {
+                // Within follow distance, idle and look at owner
+                entity.getPathfinder().stopPathfinding();
+                entity.lookAt(owner);
             }
         }
 
@@ -301,21 +322,12 @@ public class AllyEntity {
         if (hologram != null) hologram.update();
     }
 
-    private void navigateTo(Location target, double speed) {
-        if (entity == null) return;
-        org.bukkit.util.Vector dir = target.toVector().subtract(entity.getLocation().toVector()).normalize();
-        double deltaX = dir.getX() * speed;
-        double deltaZ = dir.getZ() * speed;
-        Location newLoc = entity.getLocation().add(deltaX, 0, deltaZ);
-
-        // Simple Y adjustment
-        double dy = target.getY() - entity.getLocation().getY();
-        if (Math.abs(dy) > 0.3 && Math.abs(dy) < 3) {
-            newLoc.setY(newLoc.getY() + Math.signum(dy) * 0.3);
-        }
-
-        entity.teleport(newLoc);
-        entity.setRotation((float) Math.toDegrees(Math.atan2(-dir.getX(), dir.getZ())), 0f);
+    /**
+     * Utilizes Paper's native Pathfinder to calculate blocks and jumps smoothly.
+     */
+    private void navigateTo(Location target, double speedMultiplier) {
+        if (entity == null || !entity.isValid()) return;
+        entity.getPathfinder().moveTo(target, speedMultiplier);
     }
 
     private void teleportToOwner() {
@@ -330,7 +342,7 @@ public class AllyEntity {
                 double rad = Math.toRadians(angle);
                 Location test = center.clone().add(Math.cos(rad) * r, 0, Math.sin(rad) * r);
                 test.setY(center.getY());
-                if (test.getBlock().getType().isAir() && test.clone().add(0, 1, 0).getBlock().getType().isAir()) {
+                if (test.getBlock().isPassable() && test.clone().add(0, 1, 0).getBlock().isPassable()) {
                     return test;
                 }
             }
@@ -355,8 +367,7 @@ public class AllyEntity {
             if (e instanceof Monster) {
                 shouldTarget = mode == CombatMode.AGGRESSIVE || mode == CombatMode.ALLROUND;
             } else if (e instanceof Player p && !p.getUniqueId().equals(owner.getUniqueId())) {
-                // Only target players if mode is AGGRESSIVE/ALLROUND and they're hostile to owner
-                shouldTarget = false; // Default: don't attack players unless forced or defending
+                shouldTarget = false;
             }
 
             if (!shouldTarget) continue;
@@ -463,14 +474,12 @@ public class AllyEntity {
 
     // ─── Combat events called from listeners ─────────────────────────────────
 
-    /** Called when the owner attacks something. */
     public void onOwnerAttack(LivingEntity attacked) {
         if (data.getMode() == CombatMode.NEUTRAL) return;
         if (attacked instanceof Player p && p.getUniqueId().equals(owner.getUniqueId())) return;
         this.target = attacked;
     }
 
-    /** Called when the owner or ally is attacked by an entity. */
     public void onOwnerOrAllyAttacked(LivingEntity attacker) {
         if (data.getMode() == CombatMode.NEUTRAL) return;
         if (attacker instanceof Player p && !plugin.getConfigManager().getAllyConfig()
@@ -480,7 +489,6 @@ public class AllyEntity {
         }
     }
 
-    /** Force the ally to attack a specific entity. */
     public void forceAttack(LivingEntity target) {
         this.target = target;
         this.forceAttack = true;
@@ -513,14 +521,6 @@ public class AllyEntity {
         if (entity != null && entity.isValid()) {
             data.setCurrentHealth(entity.getHealth());
         }
-    }
-
-    // ─── Helper ──────────────────────────────────────────────────────────────
-
-    private float getYawTowards(Location target) {
-        double dx = target.getX() - entity.getLocation().getX();
-        double dz = target.getZ() - entity.getLocation().getZ();
-        return (float) Math.toDegrees(Math.atan2(-dx, dz));
     }
 
     // ─── Getters ─────────────────────────────────────────────────────────────

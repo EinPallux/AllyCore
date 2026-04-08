@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
 
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,16 +119,25 @@ public class SkinManager {
 
     /**
      * Apply the configured skin to a Zombie entity visually for all players.
-     * We tag the entity with PDC; actual visual disguise is via ProtocolLib packet spoofing.
      */
     public void applySkin(Zombie entity, Player owner) {
         if (protocolManager == null) return;
         if (skinValue.isEmpty()) return;
 
-        // Build a fake GameProfile with skin textures
         UUID fakeUUID = entity.getUniqueId();
-        WrappedGameProfile profile = new WrappedGameProfile(fakeUUID, "Ally_" + owner.getName().substring(0, Math.min(5, owner.getName().length())));
-        profile.getProperties().put("textures", new WrappedSignedProperty("textures", skinValue, skinSignature));
+        String name = "Ally_" + owner.getName().substring(0, Math.min(5, owner.getName().length()));
+
+        // Create the Profile reflectively to bypass Authlib version incompatibilities
+        Object nativeProfile = createNativeGameProfile(fakeUUID, name, skinValue, skinSignature);
+        WrappedGameProfile profile;
+
+        if (nativeProfile != null) {
+            profile = WrappedGameProfile.fromHandle(nativeProfile);
+        } else {
+            // Fallback (no skin, but prevents crashes)
+            profile = new WrappedGameProfile(fakeUUID, name);
+        }
+
         profileCache.put(fakeUUID, profile);
 
         // Update for existing players viewing the entity
@@ -136,18 +146,69 @@ public class SkinManager {
         }
     }
 
+    /**
+     * Uses Java Reflection to build a Mojang GameProfile.
+     * Safely handles pre-1.21.2 (Classes) and 1.21.2+ (Records).
+     */
+    private Object createNativeGameProfile(UUID uuid, String name, String texture, String signature) {
+        try {
+            Class<?> profileClass = Class.forName("com.mojang.authlib.GameProfile");
+            Object profile = profileClass.getConstructor(UUID.class, String.class).newInstance(uuid, name);
+
+            Object propertyMap;
+            try {
+                // Pre-1.21.2 accessor
+                propertyMap = profileClass.getMethod("getProperties").invoke(profile);
+            } catch (NoSuchMethodException e) {
+                // 1.21.2+ accessor (Java Record)
+                propertyMap = profileClass.getMethod("properties").invoke(profile);
+            }
+
+            Class<?> propertyClass = Class.forName("com.mojang.authlib.properties.Property");
+            Object property = propertyClass.getConstructor(String.class, String.class, String.class).newInstance("textures", texture, signature);
+
+            // Iterate through methods to find put() safely, avoiding strict generic matching errors
+            boolean putSuccess = false;
+            for (Method m : propertyMap.getClass().getMethods()) {
+                if (m.getName().equals("put") && m.getParameterCount() == 2) {
+                    m.invoke(propertyMap, "textures", property);
+                    putSuccess = true;
+                    break;
+                }
+            }
+
+            if (!putSuccess) {
+                plugin.getLogger().warning("[SkinManager] Could not find 'put' method in PropertyMap using reflection.");
+            }
+
+            return profile;
+        } catch (Exception e) {
+            // Pass 'e' directly to the logger to print the full stack trace instead of getting 'null'
+            plugin.getLogger().log(Level.SEVERE, "[SkinManager] Failed to create native GameProfile via reflection:", e);
+            return null;
+        }
+    }
+
     private void sendSkinPackets(Player viewer, WrappedGameProfile profile) {
         if (protocolManager == null) return;
         try {
-            // Send PlayerInfo packet to register the skin
+            // Attempt 1.19.3+ Packet Data Structure
             PacketContainer infoPacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
-            // ProtocolLib handles the EnumWrappers
-            infoPacket.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
+            infoPacket.getPlayerInfoActions().write(0, EnumSet.of(EnumWrappers.PlayerInfoAction.ADD_PLAYER));
             PlayerInfoData infoData = new PlayerInfoData(profile, 0, EnumWrappers.NativeGameMode.SURVIVAL, null);
-            infoPacket.getPlayerInfoDataLists().write(0, Collections.singletonList(infoData));
+            infoPacket.getPlayerInfoDataLists().write(1, Collections.singletonList(infoData));
             protocolManager.sendServerPacket(viewer, infoPacket);
         } catch (Exception e) {
-            // ProtocolLib API may vary; gracefully skip
+            try {
+                // Fallback attempt for older packet structures
+                PacketContainer infoPacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
+                infoPacket.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
+                PlayerInfoData infoData = new PlayerInfoData(profile, 0, EnumWrappers.NativeGameMode.SURVIVAL, null);
+                infoPacket.getPlayerInfoDataLists().write(0, Collections.singletonList(infoData));
+                protocolManager.sendServerPacket(viewer, infoPacket);
+            } catch (Exception ex) {
+                // Graceful fail
+            }
         }
     }
 
